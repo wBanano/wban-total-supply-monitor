@@ -18,4 +18,5 @@ async-trait = "0.1.48"
 serde = { version = "1.0.124", features = ["derive"] }
 serde_json = { version = "1.0.64" }
 rust_decimal = { version = "1.13.0" }
-error-chain = "0.12.4"
+anyhow = "1.0"
+thiserror = "1.0"
