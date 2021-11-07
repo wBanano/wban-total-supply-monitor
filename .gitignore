@@ -1,3 +1,4 @@
 /target
+.env
 run-local.sh
 run-docker.sh

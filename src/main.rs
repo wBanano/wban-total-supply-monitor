@@ -1,28 +1,27 @@
 mod banano;
 mod bridge;
 mod wban;
-mod reddit;
+mod notifiers;
 
 use crate::banano::Banano;
 use crate::bridge::Bridge;
 use crate::wban::WBan;
-use crate::reddit::{Notifier, RedditNotifier};
+use crate::notifiers::{Notifier, TelegramNotifier};
 use rust_decimal::Decimal;
 use ethers::prelude::*;
+use dotenv::dotenv;
 use std::env;
 use anyhow::{Context, Result};
 
 #[tokio::main]
 async fn main() ->  Result<()> {
+    dotenv().ok();
+    let blockchain_network = env::var("BLOCKCHAIN_NETWORK").unwrap_or(String::from("BSC"));
     let banano_rpc_api = env::var("BAN_RPC_API").expect("Missing BAN_RPC_API env variable");
     let hot_wallet = env::var("BAN_HOT_WALLET").expect("Missing BAN_HOT_WALLET env variable");
     let cold_wallet = env::var("BAN_COLD_WALLET").expect("Missing BAN_COLD_WALLET env variable");
     let bc_rpc = env::var("BC_RPC").expect("Missing BC_RPC env variable");
     let redis_host = env::var("REDIS_HOST").expect("Missing REDIS_HOST env variable");
-    let users: Vec<String> = env::var("REDDIT_BOT_DM_USERS").expect("Missing REDDIT_BOT_DM_USERS env variable")
-        .split_whitespace()
-        .map(|user| String::from(user))
-        .collect();
 
     let banano = Banano::new(banano_rpc_api);
     let hot_wallet_balance: Decimal = banano.get_banano_balance(&hot_wallet).await?;
@@ -47,14 +46,32 @@ async fn main() ->  Result<()> {
         let mut delta = Decimal::from_str_radix(delta.unwrap().to_string().as_str(), 10)?;
         delta.set_scale(18)?;
 
+        let message = format!("We have a critical emergency on *{}* wBAN bridge:
+A: Hot wallet  : `{}` BAN
+B: Cold wallet : `{}` BAN
+C: Unwrapped   : `{}` BAN
+D: Total Supply: `{}` wBAN
+\\-\\-\\-
+Delta A\\+B\\-C\\-D  : `{}` BAN",
+            &blockchain_network,
+            hot_wallet_balance.to_string().as_str().replace(".", "\\."),
+            cold_wallet_balance.to_string().as_str().replace(".", "\\."),
+            unwrapped_balance.to_string().as_str().replace(".", "\\."),
+            total_supply.to_string().as_str().replace(".", "\\."),
+            delta.to_string().as_str().replace(".", "\\.")
+        );
+
+        println!("{}", message);
+        /*
         eprintln!("(A) Hot wallet  : {:#?} BAN", hot_wallet_balance);
         eprintln!("(B) Cold wallet : {:#?} BAN", cold_wallet_balance);
         eprintln!("(C) Unwrapped   : {:#?} BAN", unwrapped_balance);
         eprintln!("(D) Total Supply: {:#?} wBAN", total_supply);
         eprintln!("---");
         eprintln!("Delta (A+B-C-D) : {:#?} BAN", delta);
-        let notifier: Box<dyn Notifier> = RedditNotifier::new(users);
-        notifier.alert_for_total_supply_error().await?;
+        */
+        let notifier: Box<dyn Notifier> = TelegramNotifier::new();
+        notifier.alert_for_total_supply_error(&message).await.unwrap();
     }
 
     Ok(())
