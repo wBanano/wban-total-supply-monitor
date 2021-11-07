@@ -10,7 +10,6 @@ This tool expect the following environment variables:
 
 | Env Name                   | Env Description     | Example               |
 |----------------------------|---------------------|-----------------------|
-| `WBAN_API`                 | URL of the wBAN API | `http://localhost:3000` |
 | `BAN_RPC_API`              | Host and port of the BAN RPC API | `10.60.0.70:7072` |
 | `BAN_HOT_WALLET`           | Banano address of the hot wallet | `ban_1...` |
 | `BAN_COLD_WALLET`          | Banano address of the cold wallet | `ban_1...` |
