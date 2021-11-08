@@ -45,6 +45,22 @@ impl Banano {
             .json().await?;
 
         let balance: Decimal = self.convert_raw_balance(response.balance.clone())?;
+        Ok(balance)
+    }
+
+    pub async fn get_banano_balance_with_pending(&self, wallet: &String) -> Result<Decimal, BananoError> {
+        let balance_request = json!({
+            "action": "account_balance",
+            "account": wallet
+        });
+
+        let response: Balance = Client::new()
+            .post(format!("http://{}", self.rpc_api_host))
+            .json(&balance_request)
+            .send().await?
+            .json().await?;
+
+        let balance: Decimal = self.convert_raw_balance(response.balance.clone())?;
         let pending: Decimal = self.convert_raw_balance(response.pending.clone())?;
         let total: Option<Decimal> = balance.checked_add(pending);
         match total {

@@ -25,7 +25,7 @@ async fn main() ->  Result<()> {
 
     let banano = Banano::new(banano_rpc_api);
     let hot_wallet_balance: Decimal = banano.get_banano_balance(&hot_wallet).await?;
-    let cold_wallet_balance: Decimal = banano.get_banano_balance(&cold_wallet).await?;
+    let cold_wallet_balance: Decimal = banano.get_banano_balance_with_pending(&cold_wallet).await?;
 
     let bridge = Bridge::new(redis_host);
     let unwrapped_balance = bridge.get_unwrapped_ban_balance().await?;
@@ -37,7 +37,7 @@ async fn main() ->  Result<()> {
 
     let mut total_users_deposits_balance: Decimal = hot_wallet_balance
         .checked_add(cold_wallet_balance).context("Overflow when adding hot and cold BAN balances")?
-        .checked_sub(unwrapped_balance).context("Overflow")?;
+        .checked_sub(unwrapped_balance).context("Overflow when substracting unwrapped BAN balances")?;
     total_users_deposits_balance.set_scale(0).expect("Can't change total supply scale to 0");
     let total_users_deposits_balance: U256 = U256::from_dec_str(total_users_deposits_balance.to_string().as_str())?;
     let delta: Option<U256> = total_supply_raw.checked_sub(total_users_deposits_balance);
