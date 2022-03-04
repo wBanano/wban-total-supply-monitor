@@ -42,7 +42,7 @@ async fn main() ->  Result<()> {
     let total_users_deposits_balance: U256 = U256::from_dec_str(total_users_deposits_balance.to_string().as_str())?;
     let delta: Option<U256> = total_supply_raw.checked_sub(total_users_deposits_balance);
 
-    if delta.is_some() {
+    if delta.is_some() && !delta.unwrap().is_zero() {
         let mut delta = Decimal::from_str_radix(delta.unwrap().to_string().as_str(), 10)?;
         delta.set_scale(18)?;
 
@@ -62,14 +62,12 @@ Delta A\\+B\\-C\\-D  : `{}` BAN",
         );
 
         println!("{}", message);
-        /*
         eprintln!("(A) Hot wallet  : {:#?} BAN", hot_wallet_balance);
         eprintln!("(B) Cold wallet : {:#?} BAN", cold_wallet_balance);
         eprintln!("(C) Unwrapped   : {:#?} BAN", unwrapped_balance);
         eprintln!("(D) Total Supply: {:#?} wBAN", total_supply);
         eprintln!("---");
         eprintln!("Delta (A+B-C-D) : {:#?} BAN", delta);
-        */
         let notifier: Box<dyn Notifier> = TelegramNotifier::new();
         notifier.alert_for_total_supply_error(&message).await.unwrap();
     }
