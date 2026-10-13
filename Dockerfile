@@ -1,9 +1,14 @@
-FROM ekidd/rust-musl-builder:latest AS builder
+FROM rust:1.74-alpine3.18 AS builder
+
+RUN apk add --no-cache musl-dev openssl1.1-compat-dev openssl1.1-compat-libs-static
+ENV OPENSSL_STATIC=1 OPENSSL_DIR=/usr
+
+WORKDIR /app
 
 # Add our source code.
-ADD --chown=rust:rust Cargo.toml Cargo.lock ./
-ADD --chown=rust:rust src ./src
-ADD --chown=rust:rust res ./res
+ADD Cargo.toml Cargo.lock ./
+ADD src ./src
+ADD res ./res
 
 # Build our application.
 RUN cargo build --release
@@ -12,6 +17,6 @@ RUN cargo build --release
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 COPY --from=builder \
-    /home/rust/src/target/x86_64-unknown-linux-musl/release/wban-total-supply-monitor \
+    /app/target/release/wban-total-supply-monitor \
     /usr/local/bin/
 CMD /usr/local/bin/wban-total-supply-monitor

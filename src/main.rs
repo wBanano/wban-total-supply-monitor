@@ -22,12 +22,13 @@ async fn main() ->  Result<()> {
     let cold_wallet = env::var("BAN_COLD_WALLET").expect("Missing BAN_COLD_WALLET env variable");
     let bc_rpc = env::var("BC_RPC").expect("Missing BC_RPC env variable");
     let redis_host = env::var("REDIS_HOST").expect("Missing REDIS_HOST env variable");
+    let redis_password = env::var("REDIS_PASSWORD").ok().filter(|password| !password.is_empty());
 
     let banano = Banano::new(banano_rpc_api);
     let hot_wallet_balance: Decimal = banano.get_banano_balance(&hot_wallet).await?;
     let cold_wallet_balance: Decimal = banano.get_banano_balance_with_pending(&cold_wallet).await?;
 
-    let bridge = Bridge::new(redis_host);
+    let bridge = Bridge::new(redis_host, redis_password);
     let unwrapped_balance = bridge.get_unwrapped_ban_balance().await?;
     
     let wban = WBan::new(bc_rpc);

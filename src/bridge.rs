@@ -1,4 +1,4 @@
-use redis::{Client, Commands, RedisError};
+use redis::{Client, Commands, IntoConnectionInfo, RedisError};
 use rust_decimal::Decimal;
 use thiserror::Error;
 
@@ -14,8 +14,12 @@ pub enum BridgeError {
 
 impl Bridge {
 
-    pub fn new(redis_host: String) -> Bridge {
-        let client = Client::open(redis_host).unwrap();
+    pub fn new(redis_host: String, redis_password: Option<String>) -> Bridge {
+        let mut connection_info = redis_host.into_connection_info().unwrap();
+        if let Some(password) = redis_password {
+            connection_info.redis.password = Some(password);
+        }
+        let client = Client::open(connection_info).unwrap();
         Bridge {
             client,
         }
