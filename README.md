@@ -13,6 +13,13 @@ This tool expect the following environment variables:
 | `BAN_RPC_API`              | Host and port of the BAN RPC API | `10.60.0.70:7072` |
 | `BAN_HOT_WALLET`           | Banano address of the hot wallet | `ban_1...` |
 | `BAN_COLD_WALLET`          | Banano address of the cold wallet | `ban_1...` |
+| `DATABASE_HOST`            | Host of the chain's ledger Postgres; when set, unwrapped balances are read from it instead of Redis | `postgres-abc.wban` |
+| `DATABASE_PORT`            | Port of the ledger Postgres | `5432` |
+| `DATABASE_NAME`            | Database of the ledger | `primarydb` |
+| `DATABASE_USER`            | Ledger database user, connected read-only | `<user>` |
+| `DATABASE_PASSWORD`        | Ledger database password | `<password>` |
+| `REDIS_HOST`               | Redis holding the ledger, used while `DATABASE_HOST` is unset | `redis://redis:6379` |
+| `REDIS_PASSWORD`           | Redis password | `<password>` |
 | `REDDIT_BOT_USERNAME`      | Reddit username sending DM messages | `wban-banano`
 | `REDDIT_BOT_PASSWORD`      | Reddit password of the user sending DM | `<my_password> ` |
 | `REDDIT_BOT_CLIENT_ID`     | Reddit bot client ID | `<...>` |

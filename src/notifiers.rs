@@ -7,7 +7,7 @@ use std::error::Error;
 
 #[async_trait]
 pub trait Notifier {
-    async fn alert_for_total_supply_error(&self, message: &String) -> Result<(), Box<dyn Error>> ;
+    async fn alert(&self, message: &String) -> Result<(), Box<dyn Error>> ;
 }
 
 pub struct TelegramNotifier {
@@ -25,7 +25,7 @@ impl TelegramNotifier {
 
 #[async_trait]
 impl Notifier for TelegramNotifier {
-    async fn alert_for_total_supply_error(&self, message: &String) -> Result<(), Box<dyn Error>> {
+    async fn alert(&self, message: &String) -> Result<(), Box<dyn Error>> {
         self.bot.send_message(-572662736, message)
             .parse_mode(ParseMode::MarkdownV2)
             .await?;

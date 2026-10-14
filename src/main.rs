@@ -4,7 +4,7 @@ mod wban;
 mod notifiers;
 
 use crate::banano::Banano;
-use crate::bridge::Bridge;
+use crate::bridge::{Bridge, PostgresSettings};
 use crate::wban::WBan;
 use crate::notifiers::{Notifier, TelegramNotifier};
 use rust_decimal::Decimal;
@@ -21,14 +21,24 @@ async fn main() ->  Result<()> {
     let hot_wallet = env::var("BAN_HOT_WALLET").expect("Missing BAN_HOT_WALLET env variable");
     let cold_wallet = env::var("BAN_COLD_WALLET").expect("Missing BAN_COLD_WALLET env variable");
     let bc_rpc = env::var("BC_RPC").expect("Missing BC_RPC env variable");
-    let redis_host = env::var("REDIS_HOST").expect("Missing REDIS_HOST env variable");
-    let redis_password = env::var("REDIS_PASSWORD").ok().filter(|password| !password.is_empty());
 
     let banano = Banano::new(banano_rpc_api);
     let hot_wallet_balance: Decimal = banano.get_banano_balance(&hot_wallet).await?;
     let cold_wallet_balance: Decimal = banano.get_banano_balance_with_pending(&cold_wallet).await?;
 
-    let bridge = Bridge::new(redis_host, redis_password);
+    let bridge = match env::var("DATABASE_HOST").ok().filter(|host| !host.is_empty()) {
+        Some(host) => Bridge::postgres(PostgresSettings {
+            host,
+            port: env::var("DATABASE_PORT").ok().and_then(|port| port.parse().ok()).unwrap_or(5432),
+            dbname: env::var("DATABASE_NAME").expect("Missing DATABASE_NAME env variable"),
+            user: env::var("DATABASE_USER").expect("Missing DATABASE_USER env variable"),
+            password: env::var("DATABASE_PASSWORD").ok().filter(|password| !password.is_empty()),
+        }).await?,
+        None => Bridge::redis(
+            env::var("REDIS_HOST").expect("Missing REDIS_HOST env variable"),
+            env::var("REDIS_PASSWORD").ok().filter(|password| !password.is_empty()),
+        ),
+    };
     let unwrapped_balance = bridge.get_unwrapped_ban_balance().await?;
     
     let wban = WBan::new(bc_rpc);
@@ -70,7 +80,17 @@ Delta A\\+B\\-C\\-D  : `{}` BAN",
         eprintln!("---");
         eprintln!("Delta (A+B-C-D) : {:#?} BAN", delta);
         let notifier: Box<dyn Notifier> = TelegramNotifier::new();
-        notifier.alert_for_total_supply_error(&message).await.unwrap();
+        notifier.alert(&message).await.unwrap();
+    }
+
+    let stuck_withdrawals = bridge.count_stuck_withdrawals().await?;
+    if stuck_withdrawals > 0 {
+        let message = format!("*{}* wBAN bridge has {} withdrawal\\(s\\) reserved for more than 10 minutes\\. Resolve them with `yarn ledger:withdrawal`\\.",
+            &blockchain_network,
+            stuck_withdrawals
+        );
+        println!("{}", message);
+        TelegramNotifier::new().alert(&message).await.unwrap();
     }
 
     Ok(())

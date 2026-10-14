@@ -23,3 +23,4 @@ thiserror = "1.0"
 teloxide = { version = "0.5.2", features = ["macros", "auto-send"] }
 log = "0.4.8"
 pretty_env_logger = "0.4.0"
+tokio-postgres = "0.7"
