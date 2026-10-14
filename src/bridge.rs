@@ -53,6 +53,13 @@ impl Bridge {
         Ok(Bridge::Postgres(client))
     }
 
+    pub fn source(&self) -> &'static str {
+        match self {
+            Bridge::Redis(_) => "redis",
+            Bridge::Postgres(_) => "postgres",
+        }
+    }
+
     pub async fn get_unwrapped_ban_balance(&self) -> Result<Decimal> {
         match self {
             Bridge::Redis(client) => Bridge::redis_unwrapped_ban_balance(client),

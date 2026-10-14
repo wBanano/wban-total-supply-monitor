@@ -45,6 +45,15 @@ async fn main() ->  Result<()> {
     let total_supply_raw: U256 = wban.fetch_total_supply().await.context("Can't fetch wBAN total supply")?;
     let mut total_supply = Decimal::from_str_radix(total_supply_raw.to_string().as_str(), 10)?;
     total_supply.set_scale(18)?;
+    println!(
+        "{}: hot wallet {} BAN, cold wallet {} BAN, unwrapped {} BAN from {}, total supply {} wBAN",
+        &blockchain_network,
+        hot_wallet_balance,
+        cold_wallet_balance,
+        unwrapped_balance,
+        bridge.source(),
+        total_supply
+    );
 
     let mut total_users_deposits_balance: Decimal = hot_wallet_balance
         .checked_add(cold_wallet_balance).context("Overflow when adding hot and cold BAN balances")?
